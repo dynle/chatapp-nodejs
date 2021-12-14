@@ -2,6 +2,9 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import { instrument } from "@socket.io/admin-ui";
+
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 // import WebSocket from "ws";
 
 const app = express();
@@ -9,6 +12,8 @@ const app = express();
 app.set("view engine", "pug");
 app.set("views", __dirname + "/views");
 // Router
+const __filename = fileURLToPath(import.meta.rul);
+const __dirname = dirname(__filename);
 app.use("/public", express.static(__dirname + "/public"));
 // send GET request to the server
 app.get("/", (req, res) => res.render("home"));
