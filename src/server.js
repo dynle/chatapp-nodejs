@@ -22,21 +22,31 @@ const wsServer = SocketIO(httpServer);
 // listen to both http and ws
 httpServer.listen(3000, handleListen);
 
-wsServer.on("connection",(socket)=>{
-
+wsServer.on("connection", (socket) => {
+    socket["nickname"] = "Anon";
+    // shows which event is fired
+    socket.onAny((event) => {
+        console.log(`Socket Evnet: ${event}`);
+    });
     // set customized event instead of message used in websockets
-    socket.on("enter_room",(msg, done)=>{
-        console.log(msg);s
-        setTimeout(()=>{
-            done("Hello from backend")
-        },3000);
-    })
-
-    console.log(socket);
-})
-
-
-
+    socket.on("enter_room", (roomName, done) => {
+        socket.join(roomName);
+        done();
+        socket.to(roomName).emit("welcome", socket.nickname);
+    });
+    socket.on("disconnecting", () => {
+        socket.rooms.forEach((room) =>
+            socket.to(room).emit("bye", socket.nickname)
+        );
+    });
+    socket.on("new_message", (msg, room, done) => {
+        socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
+        done();
+    });
+    socket.on("nickname", (nickname) => {
+        socket["nickname"] = nickname;
+    });
+});
 
 // ------------------------code for websockets------------------------------
 /* // create ws server on top of http server

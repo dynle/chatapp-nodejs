@@ -1,24 +1,72 @@
 const socket = io();
 
 const welcome = document.getElementById("welcome");
-const form = welcome.querySelector("form");
+const room = document.getElementById("room");
+const enterForm = welcome.querySelector("#enter");
+const nameForm = welcome.querySelector("#name");
 
-function backendDone(msg){
-    console.log("The backend says: ",msg);
+room.hidden = true;
+
+let roomName;
+let nicknameInput;
+
+function addMessage(message) {
+    const ul = room.querySelector("ul");
+    const li = document.createElement("li");
+    li.innerText = message;
+    ul.appendChild(li);
+}
+
+function handleMessageSubmit(event) {
+    event.preventDefault();
+    const input = room.querySelector("#msg input");
+    const value = input.value;
+    socket.emit("new_message", input.value, roomName, () => {
+        addMessage(`You: ${value}`);
+    });
+    input.value="";
+}
+
+function handleNicknameSubmit(event){
+    event.preventDefault();
+    nicknameInput = welcome.querySelector("#name input");
+    socket.emit("nickname", nicknameInput.value);
 }
 
 function handleRoomSubmit(event) {
     event.preventDefault();
-    const input = form.querySelector("input");
+    const input = enterForm.querySelector("input");
     // set event called 'room', can send whatever I want to server, func in third argument is fired in backend
-    socket.emit("enter_room", { payload: input.value }, backendDone);
+    if(nicknameInput!=undefined){
+        socket.emit("enter_room", input.value, showRoom);
+    }else{
+        alert("Please enter a nickname");
+    }
+    roomName = input.value;
     input.value = "";
 }
 
-form.addEventListener("submit", handleRoomSubmit);
+function showRoom() {
+    welcome.hidden = true;
+    room.hidden = false;
+    const h3 = room.querySelector("h3");
+    h3.innerText = `Room ${roomName}`;
+    const msgForm = room.querySelector("#msg");
+    msgForm.addEventListener("submit", handleMessageSubmit);
+}
 
+nameForm.addEventListener("submit", handleNicknameSubmit);
+enterForm.addEventListener("submit", handleRoomSubmit);
 
+socket.on("welcome", (user) => {
+    addMessage(`${user} joined!`);
+});
 
+socket.on("bye", (left) => {
+    addMessage(`${left} left!`);
+});
+
+socket.on("new_message", addMessage);
 
 // ------------------------code for websockets---------------------------
 /* const messageList = document.querySelector("ul");
