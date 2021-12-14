@@ -19,20 +19,30 @@ const server = http.createServer(app);
 // create ws server on top of http server
 const wss = new WebSocket.Server({ server });
 
+const sockets = [];
+
 // socket is the browser that just connected
 wss.on("connection", (socket) => {
+    sockets.push(socket);
+    socket["nickname"] = "Anon";
     console.log("connected to browser");
-    socket.on('close', function close(code, data) {
+    socket.on("close", (code, data) => {
         const reason = data.toString();
         console.log("disconnected from the browser");
     });
+    socket.on("message", (data, isBinary) => {
+        const msg = isBinary ? data : data.toString();
+        const message = JSON.parse(msg);
 
-    socket.on('message', function message(data, isBinary) {
-        const message = isBinary ? data : data.toString();
-        console.log("Just got this: ",message," from the browser");
+        switch (message.type) {
+            case "new_message":
+                sockets.forEach((aSocket) => {
+                    aSocket.send(`${socket.nickname}: ${message.payload}`);
+                });
+            case "nickname":
+                socket["nickname"] = message.payload;
+        }
     });
-
-    socket.send("hello!!");
 });
 
 // listen to both http and ws
