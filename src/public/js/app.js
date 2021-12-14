@@ -30,6 +30,8 @@ function handleMessageSubmit(event) {
 function handleNicknameSubmit(event) {
     event.preventDefault();
     nicknameInput = welcome.querySelector("#name input");
+    const currentNickname = welcome.querySelector("#name h2");
+    currentNickname.innerText = `Nickname: ${nicknameInput.value}`;
     socket.emit("nickname", nicknameInput.value);
 }
 
@@ -46,6 +48,14 @@ function handleRoomSubmit(event) {
     input.value = "";
 }
 
+function handleRoomExit(event){
+    event.preventDefault();
+    socket.emit("exit_room",roomName,()=>{
+        welcome.hidden=false;
+        room.hidden=true;
+    });
+}
+
 function showRoom(newCount) {
     welcome.hidden = true;
     room.hidden = false;
@@ -53,6 +63,8 @@ function showRoom(newCount) {
     h3.innerText = `Room ${roomName} (${newCount})`;
     const msgForm = room.querySelector("#msg");
     msgForm.addEventListener("submit", handleMessageSubmit);
+    const exitButton = room.querySelector("#exitBtn");
+    exitButton.addEventListener("click",handleRoomExit);
 }
 
 nameForm.addEventListener("submit", handleNicknameSubmit);

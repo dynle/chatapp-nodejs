@@ -12,6 +12,7 @@ html(lang="en")
         main
             div#welcome
                 form#name
+                    h2 Nickname: 
                     input(placeholder="nickname",required,type="text")
                     button Save
                 form#enter
@@ -25,6 +26,9 @@ html(lang="en")
                 form#msg
                     input(placeholder="message",required,type="text")
                     button Send
+                button#exitBtn Exit
+        footer
+            b DYNLE
         script(src="/socket.io/socket.io.js")
         script(src="/public/js/app.js")
 
