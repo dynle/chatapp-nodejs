@@ -7,13 +7,14 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 // import WebSocket from "ws";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
 
 app.set("view engine", "pug");
 app.set("views", __dirname + "/views");
 // Router
-const __filename = fileURLToPath(import.meta.rul);
-const __dirname = dirname(__filename);
 app.use("/public", express.static(__dirname + "/public"));
 // send GET request to the server
 app.get("/", (req, res) => res.render("home"));
