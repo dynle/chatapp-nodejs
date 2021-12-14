@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
-import WebSocket from "ws";
+import SocketIO, { Socket } from "socket.io";
+// import WebSocket from "ws";
 
 const app = express();
 
@@ -15,14 +16,36 @@ app.get("/*", (req, res) => res.redirect("/"));
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
 // handle http and ws simultaneously, both in the same port
-const server = http.createServer(app);
-// create ws server on top of http server
-const wss = new WebSocket.Server({ server });
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
 
-const sockets = [];
+// listen to both http and ws
+httpServer.listen(3000, handleListen);
+
+wsServer.on("connection",(socket)=>{
+
+    // set customized event instead of message used in websockets
+    socket.on("enter_room",(msg, done)=>{
+        console.log(msg);s
+        setTimeout(()=>{
+            done("Hello from backend")
+        },3000);
+    })
+
+    console.log(socket);
+})
+
+
+
+
+// ------------------------code for websockets------------------------------
+/* // create ws server on top of http server
+const wss = new WebSocket.Server({ server }); */
+
+// const sockets = [];
 
 // socket is the browser that just connected
-wss.on("connection", (socket) => {
+/* wss.on("connection", (socket) => {
     sockets.push(socket);
     socket["nickname"] = "Anon";
     console.log("connected to browser");
@@ -43,7 +66,4 @@ wss.on("connection", (socket) => {
                 socket["nickname"] = message.payload;
         }
     });
-});
-
-// listen to both http and ws
-server.listen(3000, handleListen);
+}); */

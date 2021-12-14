@@ -1,4 +1,27 @@
-const messageList = document.querySelector("ul");
+const socket = io();
+
+const welcome = document.getElementById("welcome");
+const form = welcome.querySelector("form");
+
+function backendDone(msg){
+    console.log("The backend says: ",msg);
+}
+
+function handleRoomSubmit(event) {
+    event.preventDefault();
+    const input = form.querySelector("input");
+    // set event called 'room', can send whatever I want to server, func in third argument is fired in backend
+    socket.emit("enter_room", { payload: input.value }, backendDone);
+    input.value = "";
+}
+
+form.addEventListener("submit", handleRoomSubmit);
+
+
+
+
+// ------------------------code for websockets---------------------------
+/* const messageList = document.querySelector("ul");
 const nickForm = document.querySelector("#nick");
 const messageForm = document.querySelector("#message");
 // connection to the server
@@ -40,4 +63,4 @@ function handleNickSubmit(event) {
 }
 
 messageForm.addEventListener("submit", handleSubmit);
-nickForm.addEventListener("submit", handleNickSubmit);
+nickForm.addEventListener("submit", handleNickSubmit); */
