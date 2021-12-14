@@ -92,7 +92,7 @@ wsServer.on("connection", (socket) => {
 });
 
 // listen to both http and ws
-httpServer.listen(3000, handleListen);
+httpServer.listen(process.env.PORT || 3000, handleListen);
 
 // ------------------------code for websockets------------------------------
 /* // create ws server on top of http server
