@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
-import SocketIO, { Socket } from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 // import WebSocket from "ws";
 
 const app = express();
@@ -17,13 +18,40 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
 // handle http and ws simultaneously, both in the same port
 const httpServer = http.createServer(app);
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+    cors: {
+        origin: ["https://admin.socket.io"],
+        credentials: true,
+    },
+});
 
-// listen to both http and ws
-httpServer.listen(3000, handleListen);
+// for admin-ui, https://admin.socket.io
+instrument(wsServer, {
+    auth: false,
+});
+
+function publicRooms() {
+    const {
+        sockets: {
+            adapter: { sids, rooms },
+        },
+    } = wsServer;
+    const publicRooms = [];
+    rooms.forEach((_, key) => {
+        if (sids.get(key) === undefined) {
+            publicRooms.push(key);
+        }
+    });
+    return publicRooms;
+}
+
+function countRoom(roomName) {
+    return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
 
 wsServer.on("connection", (socket) => {
     socket["nickname"] = "Anon";
+    wsServer.sockets.emit("room_change", publicRooms());
     // shows which event is fired
     socket.onAny((event) => {
         console.log(`Socket Evnet: ${event}`);
@@ -31,13 +59,20 @@ wsServer.on("connection", (socket) => {
     // set customized event instead of message used in websockets
     socket.on("enter_room", (roomName, done) => {
         socket.join(roomName);
-        done();
-        socket.to(roomName).emit("welcome", socket.nickname);
+        done(countRoom(roomName));
+        socket
+            .to(roomName)
+            .emit("welcome", socket.nickname, countRoom(roomName));
+        wsServer.sockets.emit("room_change", publicRooms());
     });
     socket.on("disconnecting", () => {
         socket.rooms.forEach((room) =>
-            socket.to(room).emit("bye", socket.nickname)
+            socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1)
         );
+    });
+    // just before disconnected
+    socket.on("disconnect", () => {
+        wsServer.sockets.emit("room_change", publicRooms());
     });
     socket.on("new_message", (msg, room, done) => {
         socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
@@ -47,6 +82,9 @@ wsServer.on("connection", (socket) => {
         socket["nickname"] = nickname;
     });
 });
+
+// listen to both http and ws
+httpServer.listen(3000, handleListen);
 
 // ------------------------code for websockets------------------------------
 /* // create ws server on top of http server
