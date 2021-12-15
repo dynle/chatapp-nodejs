@@ -79,12 +79,12 @@ wsServer.on("connection", (socket) => {
         wsServer.sockets.emit("room_change", publicRooms());
         done();
     });
+    // just before disconnected
     socket.on("disconnecting", () => {
         socket.rooms.forEach((room) =>
             socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1)
         );
     });
-    // just before disconnected
     socket.on("disconnect", () => {
         wsServer.sockets.emit("room_change", publicRooms());
     });
